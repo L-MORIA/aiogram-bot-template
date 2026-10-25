@@ -1,15 +1,20 @@
-import aiosqlite
 from pathlib import Path
 
-DB_PATH = Path("bot.db")
+import aiosqlite
+
+from config import config
+
+DB_PATH = Path(config.db_path)
+
 
 async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("PRAGMA foreign_keys = ON")
         await db.executescript("""
         CREATE TABLE IF NOT EXISTS users (
             user_id     INTEGER PRIMARY KEY,
             first_name  TEXT NOT NULL,
-            username    TEXT UNIQUE,
+            username    TEXT,
             joined_at   TEXT DEFAULT CURRENT_TIMESTAMP,
             is_admin    INTEGER DEFAULT 0
         );
@@ -23,7 +28,11 @@ async def init_db():
         """)
         await db.commit()
 
+
 async def get_db():
     async with aiosqlite.connect(DB_PATH) as db:
+        # SQLite не включает проверку внешних ключей по умолчанию,
+        # pragma действует только на текущее соединение.
+        await db.execute("PRAGMA foreign_keys = ON")
         db.row_factory = aiosqlite.Row
         yield db

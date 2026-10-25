@@ -1,12 +1,20 @@
 from database.db import get_db
 
+
 async def register_user(user_id: int, first_name: str, username: str | None) -> None:
     async for db in get_db():
+        # Upsert: обновляет first_name/username при повторном /start
+        # (username без UNIQUE — юзернейм может быть занят другим пользователем,
+        # это не должно ломать регистрацию).
         await db.execute("""
-            INSERT OR IGNORE INTO users (user_id, first_name, username)
+            INSERT INTO users (user_id, first_name, username)
             VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                first_name = excluded.first_name,
+                username = excluded.username
         """, (user_id, first_name, username))
         await db.commit()
+
 
 async def is_admin(user_id: int) -> bool:
     async for db in get_db():
@@ -14,13 +22,21 @@ async def is_admin(user_id: int) -> bool:
         row = await cur.fetchone()
         return bool(row and row["is_admin"])
 
+
 async def log_action(user_id: int, action: str) -> None:
     async for db in get_db():
+        # Пишем лог только для зарегистрированных пользователей,
+        # иначе INSERT нарушит FOREIGN KEY (user_id -> users).
         await db.execute(
-            "INSERT INTO bot_logs (user_id, action) VALUES (?, ?)",
-            (user_id, action)
+            """
+            INSERT INTO bot_logs (user_id, action)
+            SELECT ?, ?
+            WHERE EXISTS (SELECT 1 FROM users WHERE user_id = ?)
+            """,
+            (user_id, action, user_id),
         )
         await db.commit()
+
 
 async def get_stats() -> dict:
     async for db in get_db():

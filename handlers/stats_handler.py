@@ -1,16 +1,22 @@
-from aiogram import Router
+import html
+
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
+
 from database.repository import get_stats, log_action
 
 router = Router()
 
+
 @router.message(Command("stats"))
-async def cmd_stats(message: Message, is_admin: bool):
+@router.message(F.text == "📊 Статистика")
+async def cmd_stats(message: Message, is_admin: bool = False):
     if not is_admin:
         await message.answer("⛔ Доступно только админам")
         return
-    await log_action(message.from_user.id, "/stats")
+    if message.from_user is not None:
+        await log_action(message.from_user.id, "/stats")
     stats = await get_stats()
     text = (
         f"📊 <b>Статистика бота</b>\n"
@@ -18,6 +24,7 @@ async def cmd_stats(message: Message, is_admin: bool):
         f"🟢 Активных сегодня: {stats['active_today']}\n"
         f"📈 Действия:\n"
     )
+    # action может содержать пользовательский ввод — экранируем HTML
     for action, cnt in stats["actions"].items():
-        text += f"  {action}: {cnt}\n"
+        text += f"  {html.escape(str(action))}: {cnt}\n"
     await message.answer(text, parse_mode="HTML")

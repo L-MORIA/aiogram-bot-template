@@ -60,7 +60,7 @@ python bot.py
 | Переменная | Описание | Пример |
 |------------|----------|--------|
 | `BOT_TOKEN` | Токен от @BotFather | `123456:ABC-DEF...` |
-| `ADMIN_IDS` | Список Telegram ID админов через запятую | `123456789,987654321` |
+| `ADMIN_IDS` | Список Telegram ID админов через запятую (или JSON-списком) | `123456789,987654321` |
 | `DB_PATH` | Путь к SQLite файлу | `bot.db` |
 
 ## Как работает админство
@@ -73,8 +73,9 @@ python bot.py
 ## Команды бота
 | Команда | Описание | Доступ |
 |---------|----------|--------|
-| `/start` | Регистрация / приветствие | Все |
-| `/stats` | Статистика бота | Только админы |
+| `/start` | Регистрация / приветствие + главная клавиатура | Все |
+| `/help` | Помощь (или кнопка «📋 Помощь») | Все |
+| `/stats` | Статистика бота (или кнопка «📊 Статистика») | Только админы |
 
 ## Схема БД (SQLite)
 ```sql
@@ -82,7 +83,7 @@ python bot.py
 CREATE TABLE users (
     user_id     INTEGER PRIMARY KEY,
     first_name  TEXT NOT NULL,
-    username    TEXT UNIQUE,
+    username    TEXT,
     joined_at   TEXT DEFAULT CURRENT_TIMESTAMP,
     is_admin    INTEGER DEFAULT 0
 );
@@ -96,6 +97,11 @@ CREATE TABLE bot_logs (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 ```
+
+> Примечание: `username` без `UNIQUE` — юзернеймы Telegram меняются и могут быть
+> заняты разными пользователями в разное время; `ON CONFLICT`-upsert при
+> повторном `/start` обновляет `first_name` и `username`. Проверка внешних ключей
+> включается через `PRAGMA foreign_keys = ON` в каждом соединении.
 
 ## Дальнейшее развитие
 - 🐳 `Dockerfile` + `docker-compose.yml`
