@@ -8,7 +8,7 @@ __pycache__/
 .coverage
 htmlcov/
 .tox/
-.venv/
+.venv*/
 venv/
 env/
 ENV/
