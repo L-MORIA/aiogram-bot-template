@@ -16,22 +16,27 @@
 ├── config.py              # Настройки (pydantic-settings)
 ├── lexicon.py             # Тексты ответов
 ├── requirements.txt
+├── requirements-dev.txt   # pytest, pytest-asyncio, ruff
+├── pyproject.toml         # конфиг pytest + ruff
 ├── .env.example
 ├── .gitignore
 ├── database/
 │   ├── __init__.py
 │   ├── db.py              # Подключение к SQLite (aiosqlite)
-│   └── repository.py      # CRUD: register, is_admin, log_action, get_stats
+│   └── repository.py      # CRUD: register, is_admin, log_action, get_stats, cleanup
 ├── handlers/
 │   ├── __init__.py
-│   ├── start_handler.py   # /start
+│   ├── start_handler.py   # /start, /help
 │   └── stats_handler.py   # /stats (только админы)
 ├── middlewares/
 │   ├── __init__.py
-│   └── admin.py           # Middleware проверки админа
-└── keyboards/
-    ├── __init__.py
-    └── reply.py           # Reply-клавиатуры
+│   ├── admin.py           # Проверка админа (ADMIN_IDS + БД)
+│   └── throttle.py        # Anti-flood
+├── keyboards/
+│   ├── __init__.py
+│   └── reply.py           # Reply-клавиатуры
+├── tests/                 # pytest-тесты
+└── .github/workflows/     # CI: ruff + pytest
 ```
 
 ## Быстрый старт
@@ -56,12 +61,30 @@ cp .env.example .env
 python bot.py
 ```
 
+## Разработка
+
+```bash
+# тесты и линтер
+pip install -r requirements-dev.txt
+pytest -v
+ruff check .
+```
+
+CI (GitHub Actions) прогоняет `ruff` + `pytest` на Python 3.10–3.12 при каждом пуше.
+
+## Что ещё встроено
+
+- 🚦 **ThrottlingMiddleware** — anti-flood (1 сообщение / 0.5 сек, админы без ограничений)
+- 🧹 **Ротация логов** — при старте удаляются записи `bot_logs` старше `LOG_RETENTION_DAYS` дней
+- 📋 **Меню команд** — `set_my_commands` при старте: `/start`, `/help` всем, `/stats` — админам
+
 ## Переменные окружения (`.env`)
 | Переменная | Описание | Пример |
 |------------|----------|--------|
 | `BOT_TOKEN` | Токен от @BotFather | `123456:ABC-DEF...` |
 | `ADMIN_IDS` | Список Telegram ID админов через запятую (или JSON-списком) | `123456789,987654321` |
 | `DB_PATH` | Путь к SQLite файлу | `bot.db` |
+| `LOG_RETENTION_DAYS` | Сколько дней хранить `bot_logs` (0 = не удалять) | `30` |
 
 ## Как работает админство
 1. При первом `/start` пользователь попадает в таблицу `users` с `is_admin=0`
@@ -105,9 +128,7 @@ CREATE TABLE bot_logs (
 
 ## Дальнейшее развитие
 - 🐳 `Dockerfile` + `docker-compose.yml`
-- 🧪 Pytest-тесты для `repository` и `handlers`
 - 🔄 Alembic миграции
-- 📦 GitHub Actions CI (ruff + pytest)
 - 🌐 Webhook-режим для продакшена
 
 ## Лицензия

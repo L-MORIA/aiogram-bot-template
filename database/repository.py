@@ -38,6 +38,22 @@ async def log_action(user_id: int, action: str) -> None:
         await db.commit()
 
 
+async def cleanup_old_logs(days: int) -> int:
+    """Удаляет записи bot_logs старше days дней, возвращает число удалённых.
+
+    days <= 0 — ничего не удалять (хранить всё).
+    """
+    if days <= 0:
+        return 0
+    async for db in get_db():
+        # days — int из провалидированного конфига, не пользовательский ввод
+        cur = await db.execute(
+            f"DELETE FROM bot_logs WHERE created_at < datetime('now', '-{int(days)} days')"
+        )
+        await db.commit()
+        return cur.rowcount or 0
+
+
 async def get_stats() -> dict:
     async for db in get_db():
         total = await (await db.execute("SELECT COUNT(*) FROM users")).fetchone()

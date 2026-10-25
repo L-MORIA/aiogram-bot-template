@@ -1,4 +1,5 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+
 
 def get_main_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
     buttons = [[KeyboardButton(text="📋 Помощь")]]

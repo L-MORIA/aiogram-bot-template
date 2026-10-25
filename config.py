@@ -18,6 +18,7 @@ class Config(BaseSettings):
     # "1,2,3" падает с SettingsError ещё до валидатора.
     admin_ids: Annotated[list[int], NoDecode] = Field(default_factory=list)
     db_path: str = "bot.db"
+    log_retention_days: int = Field(default=30, ge=0)  # 0 = не удалять старые логи
 
     @field_validator("admin_ids", mode="before")
     @classmethod
