@@ -11,7 +11,7 @@ router = Router()
 
 @router.message(Command("stats"))
 @router.message(F.text == "📊 Статистика")
-async def cmd_stats(message: Message, is_admin: bool = False):
+async def cmd_stats(message: Message, is_admin: bool = False) -> None:
     if not is_admin:
         await message.answer("⛔ Доступно только админам")
         return

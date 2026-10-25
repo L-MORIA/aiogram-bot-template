@@ -8,7 +8,7 @@ from config import config
 DB_PATH = Path(config.db_path)
 
 
-async def init_db():
+async def init_db() -> None:
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("PRAGMA foreign_keys = ON")
         await db.executescript("""

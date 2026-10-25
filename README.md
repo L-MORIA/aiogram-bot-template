@@ -4,6 +4,8 @@
 
 Готовый шаблон Telegram-бота на **aiogram 3** + **SQLite (aiosqlite)** + **Pydantic Settings**.
 
+> Требуется **Python 3.10+** (код использует синтаксис `int | None`).
+
 ## Возможности
 - 🏗 Чистая архитектура: `handlers` / `middlewares` / `database` / `keyboards` / `lexicon`
 - 👤 Регистрация пользователей при `/start`

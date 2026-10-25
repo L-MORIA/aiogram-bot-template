@@ -10,7 +10,7 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, is_admin: bool = False):
+async def cmd_start(message: Message, is_admin: bool = False) -> None:
     if message.from_user is None:
         return
     await register_user(
@@ -27,7 +27,7 @@ async def cmd_start(message: Message, is_admin: bool = False):
 
 @router.message(Command("help"))
 @router.message(F.text == "📋 Помощь")
-async def cmd_help(message: Message):
+async def cmd_help(message: Message) -> None:
     if message.from_user is not None:
         await log_action(message.from_user.id, "help")
     await message.answer(LEXICON["help"])

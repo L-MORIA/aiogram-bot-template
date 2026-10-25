@@ -18,7 +18,9 @@ async def register_user(user_id: int, first_name: str, username: str | None) -> 
 
 async def is_admin(user_id: int) -> bool:
     async with get_db() as db:
-        cur = await db.execute("SELECT is_admin FROM users WHERE user_id = ?", (user_id,))
+        cur = await db.execute(
+            "SELECT is_admin FROM users WHERE user_id = ?", (user_id,)
+        )
         row = await cur.fetchone()
         return bool(row and row["is_admin"])
 
@@ -58,13 +60,15 @@ async def get_stats() -> dict:
     async with get_db() as db:
         total = await (await db.execute("SELECT COUNT(*) FROM users")).fetchone()
         active_today = await (await db.execute(
-            "SELECT COUNT(DISTINCT user_id) FROM bot_logs WHERE date(created_at) = date('now')"
+            "SELECT COUNT(DISTINCT user_id) FROM bot_logs "
+            "WHERE date(created_at) = date('now')"
         )).fetchone()
         actions = await (await db.execute(
-            "SELECT action, COUNT(*) as cnt FROM bot_logs GROUP BY action ORDER BY cnt DESC"
+            "SELECT action, COUNT(*) as cnt FROM bot_logs "
+            "GROUP BY action ORDER BY cnt DESC"
         )).fetchall()
         return {
             "total_users": total[0] if total else 0,
             "active_today": active_today[0] if active_today else 0,
-            "actions": {row["action"]: row["cnt"] for row in actions}
+            "actions": {row["action"]: row["cnt"] for row in actions},
         }

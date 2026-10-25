@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import BotCommand, BotCommandScopeChat, BotCommandScopeDefault
@@ -14,6 +15,7 @@ from middlewares.admin import AdminMiddleware
 from middlewares.throttle import ThrottlingMiddleware
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def set_bot_commands(bot: Bot) -> None:
@@ -28,17 +30,19 @@ async def set_bot_commands(bot: Bot) -> None:
     await bot.set_my_commands(base_commands, scope=BotCommandScopeDefault())
     for admin_id in config.admin_ids:
         try:
-            await bot.set_my_commands(admin_commands, scope=BotCommandScopeChat(chat_id=admin_id))
+            await bot.set_my_commands(
+                admin_commands, scope=BotCommandScopeChat(chat_id=admin_id)
+            )
         except TelegramBadRequest:
             # чат ещё не открывался — команды появятся после первого /start
-            logging.debug("Не удалось задать команды для админа %s", admin_id)
+            logger.debug("Не удалось задать команды для админа %s", admin_id)
 
 
-async def main():
+async def main() -> None:
     await init_db()
     deleted = await cleanup_old_logs(config.log_retention_days)
     if deleted:
-        logging.info("Удалено старых логов: %s", deleted)
+        logger.info("Удалено старых логов: %s", deleted)
 
     dp = Dispatcher()
     # порядок важен: AdminMiddleware кладёт is_admin в data,
@@ -48,10 +52,16 @@ async def main():
     dp.include_router(start_handler.router)
     dp.include_router(stats_handler.router)
 
-    # async with гарантирует закрытие сессии бота при любом исходе
-    async with Bot(token=config.bot_token, parse_mode=ParseMode.HTML) as bot:
+    # parse_mode как kwarg Bot() удалён в aiogram 3.7 — только DefaultBotProperties.
+    async with Bot(
+        token=config.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    ) as bot:
+        # Если бот раньше работал на webhook, start_polling упадёт с 409 Conflict,
+        # пока вебхук не снят.
+        await bot.delete_webhook(drop_pending_updates=True)
         await set_bot_commands(bot)
-        logging.info("Bot started")
+        logger.info("Bot started")
         await dp.start_polling(bot)
 
 
@@ -59,4 +69,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Bot stopped")
+        logger.info("Bot stopped")
