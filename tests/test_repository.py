@@ -28,7 +28,7 @@ async def test_register_upsert_updates_fields():
     await register_user(1, "Alice II", None)
     stats = await get_stats()
     assert stats["total_users"] == 1  # тот же user_id — не задвоился
-    async for conn in get_db():
+    async with get_db() as conn:
         cur = await conn.execute("SELECT first_name, username FROM users WHERE user_id = 1")
         row = await cur.fetchone()
     assert row["first_name"] == "Alice II"
@@ -40,7 +40,7 @@ async def test_is_admin():
     await register_user(1, "Alice", None)
     assert await is_admin(1) is False
     assert await is_admin(999) is False  # незарегистрированный
-    async for conn in get_db():
+    async with get_db() as conn:
         await conn.execute("UPDATE users SET is_admin = 1 WHERE user_id = 1")
         await conn.commit()
     assert await is_admin(1) is True
@@ -58,7 +58,7 @@ async def test_log_action_registered_and_not():
 @pytest.mark.usefixtures("db")
 async def test_foreign_keys_enforced():
     with pytest.raises(sqlite3.IntegrityError):
-        async for conn in get_db():
+        async with get_db() as conn:
             await conn.execute("INSERT INTO bot_logs (user_id, action) VALUES (777, 'x')")
             await conn.commit()
 
@@ -79,7 +79,7 @@ async def test_get_stats_counts():
 async def test_cleanup_old_logs():
     await register_user(1, "Alice", None)
     await log_action(1, "/start")
-    async for conn in get_db():
+    async with get_db() as conn:
         # старая запись (40 дней назад) + свежая из log_action
         await conn.execute(
             "INSERT INTO bot_logs (user_id, action, created_at) "

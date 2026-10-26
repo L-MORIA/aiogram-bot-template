@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import aiosqlite
@@ -29,7 +30,13 @@ async def init_db():
         await db.commit()
 
 
+@asynccontextmanager
 async def get_db():
+    """Соединение как контекстный менеджер: закрывается строго после блока.
+
+    aiosqlite-соединение — это non-daemon поток; не закрытое явно,
+    оно навсегда блокирует завершение процесса (актуально для тестов и CLI).
+    """
     async with aiosqlite.connect(DB_PATH) as db:
         # SQLite не включает проверку внешних ключей по умолчанию,
         # pragma действует только на текущее соединение.

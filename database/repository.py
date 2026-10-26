@@ -2,7 +2,7 @@ from database.db import get_db
 
 
 async def register_user(user_id: int, first_name: str, username: str | None) -> None:
-    async for db in get_db():
+    async with get_db() as db:
         # Upsert: обновляет first_name/username при повторном /start
         # (username без UNIQUE — юзернейм может быть занят другим пользователем,
         # это не должно ломать регистрацию).
@@ -17,14 +17,14 @@ async def register_user(user_id: int, first_name: str, username: str | None) -> 
 
 
 async def is_admin(user_id: int) -> bool:
-    async for db in get_db():
+    async with get_db() as db:
         cur = await db.execute("SELECT is_admin FROM users WHERE user_id = ?", (user_id,))
         row = await cur.fetchone()
         return bool(row and row["is_admin"])
 
 
 async def log_action(user_id: int, action: str) -> None:
-    async for db in get_db():
+    async with get_db() as db:
         # Пишем лог только для зарегистрированных пользователей,
         # иначе INSERT нарушит FOREIGN KEY (user_id -> users).
         await db.execute(
@@ -45,7 +45,7 @@ async def cleanup_old_logs(days: int) -> int:
     """
     if days <= 0:
         return 0
-    async for db in get_db():
+    async with get_db() as db:
         # days — int из провалидированного конфига, не пользовательский ввод
         cur = await db.execute(
             f"DELETE FROM bot_logs WHERE created_at < datetime('now', '-{int(days)} days')"
@@ -55,7 +55,7 @@ async def cleanup_old_logs(days: int) -> int:
 
 
 async def get_stats() -> dict:
-    async for db in get_db():
+    async with get_db() as db:
         total = await (await db.execute("SELECT COUNT(*) FROM users")).fetchone()
         active_today = await (await db.execute(
             "SELECT COUNT(DISTINCT user_id) FROM bot_logs WHERE date(created_at) = date('now')"

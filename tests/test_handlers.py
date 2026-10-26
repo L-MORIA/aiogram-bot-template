@@ -75,7 +75,7 @@ async def test_cmd_stats_for_admin():
     from database.repository import get_stats, register_user
 
     await register_user(1, "Admin", None)
-    async for conn in get_db():
+    async with get_db() as conn:
         # действие с HTML-спецсимволами — должно попасть в вывод экранированным
         await conn.execute(
             "INSERT INTO bot_logs (user_id, action) VALUES (1, '<b>inject</b>')"

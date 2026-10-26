@@ -43,7 +43,7 @@ class TestAdminMiddleware:
     async def test_db_admin(self, monkeypatch):
         monkeypatch.setattr(middlewares.admin, "config", SimpleNamespace(admin_ids=[]))
         await repository.register_user(42, "Admin", None)
-        async for conn in get_db():
+        async with get_db() as conn:
             await conn.execute("UPDATE users SET is_admin = 1 WHERE user_id = 42")
             await conn.commit()
         result, _ = await run_middleware(AdminMiddleware(), FakeMessage(42))
