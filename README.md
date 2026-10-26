@@ -1,5 +1,7 @@
 # Aiogram 3 Bot Template
 
+[![CI](https://github.com/L-MORIA/aiogram-bot-template/actions/workflows/ci.yml/badge.svg)](https://github.com/L-MORIA/aiogram-bot-template/actions/workflows/ci.yml)
+
 Готовый шаблон Telegram-бота на **aiogram 3** + **SQLite (aiosqlite)** + **Pydantic Settings**.
 
 ## Возможности
