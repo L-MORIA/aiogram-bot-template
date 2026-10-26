@@ -20,6 +20,9 @@
 ├── requirements.txt
 ├── requirements-dev.txt   # pytest, pytest-asyncio, ruff
 ├── pyproject.toml         # конфиг pytest + ruff
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
 ├── .env.example
 ├── .gitignore
 ├── database/
@@ -62,6 +65,19 @@ cp .env.example .env
 # 5. Запуск
 python bot.py
 ```
+
+### Запуск в Docker
+
+```bash
+cp .env.example .env   # вставь BOT_TOKEN и ADMIN_IDS
+docker compose up -d --build
+
+# логи / остановка
+docker compose logs -f
+docker compose down
+```
+
+База хранится в именованном томе `bot-data` и переживает пересборку; контейнер работает от непривилегированного пользователя и рестартуется автоматически (`restart: unless-stopped`).
 
 ## Разработка
 
@@ -129,7 +145,6 @@ CREATE TABLE bot_logs (
 > включается через `PRAGMA foreign_keys = ON` в каждом соединении.
 
 ## Дальнейшее развитие
-- 🐳 `Dockerfile` + `docker-compose.yml`
 - 🔄 Alembic миграции
 - 🌐 Webhook-режим для продакшена
 

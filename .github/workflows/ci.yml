@@ -29,3 +29,12 @@ jobs:
 
       - name: Tests (pytest)
         run: pytest -v
+
+  docker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t aiogram-bot-template .
