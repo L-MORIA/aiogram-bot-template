@@ -48,9 +48,11 @@ async def cleanup_old_logs(days: int) -> int:
     if days <= 0:
         return 0
     async with get_db() as db:
-        # days — int из провалидированного конфига, не пользовательский ввод
+        # модификатор datetime передаём параметром, а не конкатенацией строки —
+        # f-string в SQL ловится bandit как B608
         cur = await db.execute(
-            f"DELETE FROM bot_logs WHERE created_at < datetime('now', '-{int(days)} days')"
+            "DELETE FROM bot_logs WHERE created_at < datetime('now', '-' || ? || ' days')",
+            (days,),
         )
         await db.commit()
         return cur.rowcount or 0
